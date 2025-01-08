@@ -26,6 +26,7 @@ const HomeScreen = ({ navigation }) => {
     setLoading(false);
   };
 
+
   const handleLoadMore = () => {
     if (!loading) setPage((prevPage) => prevPage + 1);
   };
@@ -45,8 +46,9 @@ const HomeScreen = ({ navigation }) => {
         <Button   color='grey' title='Login' onPress={() => {navigation.navigate('Login')}}/>
         
       </View> : 
-        <View>
-          <Text style={styles.username}>{username}</Text>
+        <View style={styles.usernameTitle}>
+          <Text style={{color:"white" , fontSize : 15}} >Welcome {username.toUpperCase()}</Text>
+          <Button color="grey" title="Favorites" onPress={() => {navigation.navigate('Favorites')}} />
           <Button title='Logout' onPress={handleLogout}/>
         </View>
       }
@@ -83,12 +85,9 @@ const styles = StyleSheet.create({
     padding: 10,
     color:'red',
   },
-  username:{
-    display : 'flex', 
-    justifyContent : 'end', 
-    color : 'white', 
-    fontSize : 30,
-    
+  usernameTitle:{
+    alignItems : "center" ,
+    fontSize : 20,
   }
 });
 

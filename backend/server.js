@@ -14,7 +14,7 @@ app.use(cors());
 
 
 // MongoDB Bağlantısı
-const MONGO_URI = 'mongodb://localhost:27017/cryptoproject'; // Yerel bağlantı
+const MONGO_URI = 'mongodb+srv://emirc:Emir2211@cluster0.vwhsi9m.mongodb.net/cryptoproject?retryWrites=true&w=majority&appName=Cluster0'; // Yerel bağlantı
 mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB bağlantısı başarılı!'))
   .catch(err => console.error('MongoDB bağlantı hatası:', err));
@@ -29,8 +29,9 @@ app.get('/', (req, res) => {
 
 // Sunucu Başlatma
 const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+const HOST = '172.20.10.10'; //http
+app.listen(PORT, HOST, () => {
+  console.log(`Server running at http://${HOST}:${PORT}/`);
 });
 
 
@@ -80,20 +81,21 @@ app.post('/login', async (req, res) => {
 });
 
 app.post('/favorites', async (req, res) => {
-  const { userId, coin } = req.body;
+  const { username, coin } = req.body;
 
   try {
     // Kullanıcıyı MongoDB'de bul
-    const user = await User.findById(userId);
+    const user = await User.findOne({username});
     if (!user) {
       return res.status(404).send({ message: 'Kullanıcı bulunamadı' });
     }
 
     // Favorilere ekleme
-    if (!user.favorites.includes(coin)) {
+    if (!user.favorites.some(fav => fav.id === coin.id)) {
       user.favorites.push(coin);
       await user.save();
     }
+    
 
     res.send({ favorites: user.favorites, message: 'Favorilere eklendi' });
   } catch (error) {
@@ -102,17 +104,41 @@ app.post('/favorites', async (req, res) => {
   }
 });
 
-app.get('/favorites/:userId', async (req, res) => {
-  const { userId } = req.params;
+app.get('/favorites/:username', async (req, res) => {
+  const { username } = req.params;
 
   try {
     // Kullanıcıyı MongoDB'de bul
-    const user = await User.findById(userId);
+    const user = await User.findOne({username});
     if (!user) {
       return res.status(404).send({ message: 'Kullanıcı bulunamadı' });
     }
 
     res.send({ favorites: user.favorites });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Sunucu hatası', error });
+  }
+});
+
+app.delete('/favorites/:username/:coinId', async (req, res) => {
+  const { username, coinId } = req.params;
+
+  try {
+    // Kullanıcıyı MongoDB'de bul
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).send({ message: 'Kullanıcı bulunamadı' });
+    }
+
+    // Favoriler listesinden ilgili coin'i sil
+    const updatedFavorites = user.favorites.filter(fav => fav.id !== coinId);
+    user.favorites = updatedFavorites;
+
+    // Değişiklikleri kaydet
+    await user.save();
+
+    res.send({ message: 'Favori başarıyla silindi', favorites: user.favorites });
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Sunucu hatası', error });
